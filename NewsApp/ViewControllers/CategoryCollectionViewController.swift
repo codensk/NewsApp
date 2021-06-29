@@ -19,6 +19,8 @@ class CategoryCollectionViewController: UICollectionViewController {
     
     // MARK: - Methods
     private func setup() {
+        overrideUserInterfaceStyle = .light
+        
         collectionView.collectionViewLayout = createViewCollectionCompositionalLayout()
         
         collectionView.showsVerticalScrollIndicator = false
