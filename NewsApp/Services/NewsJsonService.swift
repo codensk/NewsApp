@@ -1,5 +1,5 @@
 //
-//  NetworkManager.swift
+//  NewsJsonService.swift
 //  NewsApp
 //
 //  Created by SERGEY VOROBEV on 25.06.2021.
@@ -7,12 +7,9 @@
 
 import UIKit
 
-enum API: String {
-    case headlines = "https://newsapi.org/v2/top-headlines"
-}
-
-class NetworkManager {
-    static let shared = NetworkManager()
+// Working with JSON and URLSession
+class NewsJsonService: NewsFetching {
+    static let shared = NewsJsonService()
 
     private let apiKey = "2376ba10df08418b93b024c4aa6803a1"
     private let country = "ru"
@@ -74,6 +71,48 @@ class NetworkManager {
             }
                         
             completionHandler(image, nil)
+        }
+        
+        task.resume()
+    }
+    
+    func postNews(news: NewsItem, completionHandler: @escaping (PostResult?, String?) -> Void) {
+        guard let url = URL(string: API.saveNews.rawValue) else {
+            return
+        }
+        
+        guard let jsonData = try? JSONEncoder().encode(news) else {
+            completionHandler(nil, "News data encode error")
+            
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = jsonData
+        
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error = error {
+                completionHandler(nil, error.localizedDescription)
+                
+                return
+            }
+            
+            guard let data = data else {
+                completionHandler(nil, "Data loading error")
+                
+                return
+            }
+            
+            do {
+                let postResult = try JSONDecoder().decode(PostResult.self, from: data)
+                
+                completionHandler(postResult, nil)
+            } catch let error {
+                completionHandler(nil, error.localizedDescription)
+            }
         }
         
         task.resume()

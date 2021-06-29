@@ -8,6 +8,10 @@
 import UIKit
 
 class ReadViewController: UIViewController {
+    static let identifier = "readVC"
+    
+    var newsFetcher: NewsFetching!
+    
     var newsItem: NewsItem?
     var newsImage: UIImage?
     
@@ -45,6 +49,29 @@ class ReadViewController: UIViewController {
             newsImageView.image = UIImage(named: "placeholder")
         }
   
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "square.and.arrow.down"), style: .plain, target: self, action: #selector(newsPost))
+    }
+    
+    @objc func newsPost() {
+        guard let newsItem = newsItem else {
+            return
+        }
+        
+        newsFetcher.postNews(news: newsItem) { result, error in
+            if let error = error {
+                print("Error: \(error)")
+                
+                return
+            }
+            
+            guard let result = result else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.showAlert(title: "Новость отправлена", message: "Всего отправлено: \(result.total)")
+            }
+        }
     }
 
     // MARK: - IBActions

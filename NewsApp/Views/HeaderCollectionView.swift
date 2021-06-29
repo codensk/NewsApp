@@ -8,6 +8,8 @@
 import UIKit
 
 class HeaderCollectionView: UICollectionReusableView {
+    static let headerIdentifier = "header"
+    
     lazy var headerLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center

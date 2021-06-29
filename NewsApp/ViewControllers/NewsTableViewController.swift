@@ -8,8 +8,10 @@
 import UIKit
 
 class NewsTableViewController: UITableViewController {
+    static let identifier = "newsVC"
+    static let newsCellIdentifier = "newsItemCell"
     
-    private let networkManager = NetworkManager()
+    private var newsFetcher: NewsFetching!
     
     private var imageCache = [Int: UIImage?]()
     private var headLine: NewsHeadline?
@@ -19,6 +21,8 @@ class NewsTableViewController: UITableViewController {
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        newsFetcher = NewsJsonAFService()
 
         tableView.rowHeight = 92
     }
@@ -35,7 +39,7 @@ extension NewsTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: "newsItemCell", for: indexPath) as? NewsTableViewCell,
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: NewsTableViewController.newsCellIdentifier, for: indexPath) as? NewsTableViewCell,
               let headLine = headLine,
               let news = headLine.articles
               else {
@@ -55,7 +59,7 @@ extension NewsTableViewController {
             } else {
                 
                 // if image not presented in cache, start load by api
-                networkManager.fetchNewsImage(for: imageUrl) { image, error in
+                newsFetcher.fetchNewsImage(for: imageUrl) { image, error in
                     if let error = error {
                         print("Error: \(error)")
                         
@@ -74,7 +78,7 @@ extension NewsTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let vc = storyboard?.instantiateViewController(identifier: "readVC") as? ReadViewController,
+        guard let vc = storyboard?.instantiateViewController(identifier: ReadViewController.identifier) as? ReadViewController,
               let headLine = headLine,
               let news = headLine.articles
               else {
@@ -84,6 +88,7 @@ extension NewsTableViewController {
         let selectedNewsItem = news[indexPath.row]
         
         vc.newsItem = selectedNewsItem
+        vc.newsFetcher = newsFetcher
         
         if let cachedImage = imageCache[indexPath.row] {
             vc.newsImage = cachedImage
@@ -100,7 +105,7 @@ extension NewsTableViewController {
         
         startActivityIndicator()
         
-        networkManager.fetchNews(for: category) { newsHeadline, error in
+        newsFetcher.fetchNews(for: category) { newsHeadline, error in
             if let error = error {
                 DispatchQueue.main.async {
                     self.stopActivityIndicator()

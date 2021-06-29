@@ -8,6 +8,8 @@
 import UIKit
 
 class CategoryCollectionViewController: UICollectionViewController {
+    static let cellIdentifier = "categoryCell"
+    
     private let categories = Category.getCategories()
 
     // MARK: - Life Cycle
@@ -25,7 +27,7 @@ class CategoryCollectionViewController: UICollectionViewController {
         
         collectionView.showsVerticalScrollIndicator = false
         
-        collectionView.register(HeaderCollectionView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "header")
+        collectionView.register(HeaderCollectionView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: HeaderCollectionView.headerIdentifier)
     }
     
     private func createViewCollectionCompositionalLayout() -> UICollectionViewLayout {
@@ -68,7 +70,7 @@ extension CategoryCollectionViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "categoryCell", for: indexPath) as? CategoryCollectionViewCell else {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CategoryCollectionViewController.cellIdentifier, for: indexPath) as? CategoryCollectionViewCell else {
             return UICollectionViewCell()
         }
         
@@ -85,7 +87,7 @@ extension CategoryCollectionViewController {
 
 extension CategoryCollectionViewController: UICollectionViewDelegateFlowLayout {
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        guard kind == UICollectionView.elementKindSectionHeader, let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "header", for: indexPath) as? HeaderCollectionView else {
+        guard kind == UICollectionView.elementKindSectionHeader, let headerView = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: HeaderCollectionView.headerIdentifier, for: indexPath) as? HeaderCollectionView else {
             return UICollectionReusableView()
         }
         
@@ -97,7 +99,7 @@ extension CategoryCollectionViewController: UICollectionViewDelegateFlowLayout {
 // MARK: - UICollectionViewDelegate
 extension CategoryCollectionViewController {
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let vc = storyboard?.instantiateViewController(identifier: "newsVC") as? NewsTableViewController else {
+        guard let vc = storyboard?.instantiateViewController(identifier: NewsTableViewController.identifier) as? NewsTableViewController else {
             return
         }
         
