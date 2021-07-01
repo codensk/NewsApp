@@ -22,7 +22,7 @@ class NewsTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        newsFetcher = NewsJsonAFService()
+        newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .alamofire)
 
         tableView.rowHeight = 92
     }

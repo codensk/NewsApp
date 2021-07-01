@@ -12,7 +12,8 @@ import UIKit
 class NewsJsonAFService: NewsFetching {
     static let shared = NewsJsonService()
     
-    private let apiKey = "2376ba10df08418b93b024c4aa6803a1"
+    var apiKey = "2376ba10df08418b93b024c4aa6803a1"
+    
     private let country = "ru"
     
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void) {
