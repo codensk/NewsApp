@@ -25,6 +25,7 @@ class NewsTableViewController: UITableViewController {
         newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .alamofire)
 
         tableView.rowHeight = 92
+        tableView.separatorStyle = .none
     }
 }
 
