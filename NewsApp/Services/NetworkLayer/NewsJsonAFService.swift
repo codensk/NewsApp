@@ -12,12 +12,18 @@ import UIKit
 class NewsJsonAFService: NewsFetching {
     static let shared = NewsJsonAFService()
     
+    private let cacher = NewsCacheService.shared
+    
     var apiKey = "2376ba10df08418b93b024c4aa6803a1"
     
     private let country = "ru"
     
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void) {
         let urlStr = "\(API.headlines.rawValue)?country=\(country)&category=\(category.categoryCode)&apiKey=\(apiKey)"
+        
+        if let news = cacher.cachedNews(for: urlStr) {
+            completionHandler(news, nil)
+        }
         
         let request = AF.request(urlStr).validate()
         
@@ -26,6 +32,10 @@ class NewsJsonAFService: NewsFetching {
             case .failure(let error):
                 completionHandler(nil, error.localizedDescription)
             case .success(let result):
+                if let urlResponse = response.response {
+                    self.cacher.store(for: response.data, with: urlResponse)
+                }
+                
                 completionHandler(result, nil)
             }
         }
@@ -34,6 +44,10 @@ class NewsJsonAFService: NewsFetching {
     func fetchNewsImage(for urlStr: String, completionHandler: @escaping (UIImage?, String?) -> Void) {
         guard urlStr.contains("https") else {
             return
+        }
+        
+        if let image = cacher.cachedImageNews(for: urlStr) {
+            completionHandler(image, nil)
         }
         
         let request = AF.request(urlStr).validate()
@@ -47,6 +61,10 @@ class NewsJsonAFService: NewsFetching {
                     completionHandler(nil, "Image data error")
                     
                     return
+                }
+                
+                if let urlResponse = response.response {
+                    self.cacher.store(for: data, with: urlResponse)
                 }
                 
                 completionHandler(image, nil)

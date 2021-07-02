@@ -12,6 +12,8 @@ class NewsJsonService: NewsFetching {
     static let shared = NewsJsonService()
     
     var apiKey = "2376ba10df08418b93b024c4aa6803a1"
+    
+    private let cacher = NewsCacheService.shared
 
     private let country = "ru"
     
@@ -22,14 +24,18 @@ class NewsJsonService: NewsFetching {
             return
         }
         
-        let task = URLSession.shared.dataTask(with: url) { data, _, error in
+        if let news = cacher.cachedNews(for: urlStr) {
+            completionHandler(news, nil)
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 completionHandler(nil, error.localizedDescription)
                 
                 return
             }
             
-            guard let data = data else {
+            guard let response = response, let data = data else {
                 completionHandler(nil, "Data loading error")
                 
                 return
@@ -37,6 +43,8 @@ class NewsJsonService: NewsFetching {
             
             do {
                 let newsHeadline = try JSONDecoder().decode(NewsHeadline.self, from: data)
+                
+                self.cacher.store(for: data, with: response)
                 
                 completionHandler(newsHeadline, nil)
             } catch let error {
@@ -51,15 +59,19 @@ class NewsJsonService: NewsFetching {
         guard urlStr.contains("https"), let url = URL(string: urlStr) else {
             return
         }
+        
+        if let image = cacher.cachedImageNews(for: urlStr) {
+            completionHandler(image, nil)
+        }
    
-        let task = URLSession.shared.dataTask(with: url) { data, _, error in
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 completionHandler(nil, error.localizedDescription)
                 
                 return
             }
             
-            guard let data = data else {
+            guard let response = response, let data = data else {
                 completionHandler(nil, "Data loading error")
                 
                 return
@@ -70,6 +82,8 @@ class NewsJsonService: NewsFetching {
                 
                 return
             }
+            
+            self.cacher.store(for: data, with: response)
                         
             completionHandler(image, nil)
         }

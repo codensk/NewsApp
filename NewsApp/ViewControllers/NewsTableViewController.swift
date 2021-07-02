@@ -11,10 +11,12 @@ class NewsTableViewController: UITableViewController {
     static let identifier = "newsVC"
     static let newsCellIdentifier = "newsItemCell"
     
+    var selectedCategory: Category!
+    
     private var newsFetcher: NewsFetching!
     
-    private var imageCache = [Int: UIImage?]()
     private var headLine: NewsHeadline?
+    private let cacher = NewsCacheService.shared
     
     private var activityIndicator: UIActivityIndicatorView!
 
@@ -22,10 +24,30 @@ class NewsTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setup()
+    }
+    
+    // MARK: - Methods
+    private func setup() {
         newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .alamofire)
-
+        
         tableView.rowHeight = 92
         tableView.separatorStyle = .none
+        
+        tableView.refreshControl = UIRefreshControl()
+        tableView.refreshControl?.attributedTitle = NSAttributedString(string: "Обновить")
+        tableView.refreshControl?.addTarget(self, action: #selector(newsRefresh), for: .valueChanged)
+        tableView.refreshControl?.layer.zPosition = -1
+    }
+    
+    @objc private func newsRefresh() {
+        cacher.clearCache()
+        
+        fetchNewsList(for: selectedCategory)
+        
+        tableView.refreshControl?.endRefreshing()
+        
+        //tableView.reloadData()
     }
 }
 
@@ -52,24 +74,17 @@ extension NewsTableViewController {
         cell.newsTitleLabel.text = newsItem.title
         
         cell.newsImageView.image = UIImage(named: "placeholder")
-        
+ 
         if let imageUrl = newsItem.urlToImage {
-            // try to load news image from cache
-            if let cachedImage = imageCache[indexPath.row] {
-                cell.newsImageView.image = cachedImage
-            } else {
+            newsFetcher.fetchNewsImage(for: imageUrl) { image, error in
+                if let error = error {
+                    print("Error: \(error)")
+                    
+                    return
+                }
                 
-                // if image not presented in cache, start load by api
-                newsFetcher.fetchNewsImage(for: imageUrl) { image, error in
-                    if let error = error {
-                        print("Error: \(error)")
-                        
-                        return
-                    }
-                    self.imageCache[indexPath.row] = image
-                    DispatchQueue.main.async {
-                        cell.newsImageView.image = image
-                    }
+                DispatchQueue.main.async {
+                    cell.newsImageView.image = image
                 }
             }
         }
@@ -90,11 +105,7 @@ extension NewsTableViewController {
         
         vc.newsItem = selectedNewsItem
         vc.newsFetcher = newsFetcher
-        
-        if let cachedImage = imageCache[indexPath.row] {
-            vc.newsImage = cachedImage
-        }
-        
+      
         navigationController?.pushViewController(vc, animated: true)
     }
 }
@@ -102,6 +113,8 @@ extension NewsTableViewController {
 // MARK: - Networking
 extension NewsTableViewController {
     func fetchNewsList(for category: Category) {
+        selectedCategory = category
+        
         title = category.categoryName
         
         startActivityIndicator()
