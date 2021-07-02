@@ -13,4 +13,5 @@ protocol NewsFetching {
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void)
     func fetchNewsImage(for urlStr: String, completionHandler: @escaping (UIImage?, String?) -> Void)
     func postNews(news: NewsItem, completionHandler: @escaping (PostResult?, String?) -> Void)
+    func switchLanguage() -> String
 }

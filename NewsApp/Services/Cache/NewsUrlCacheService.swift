@@ -1,5 +1,5 @@
 //
-//  NewsCacheService.swift
+//  NewsUrlCacheService.swift
 //  NewsApp
 //
 //  Created by SERGEY VOROBEV on 02.07.2021.
@@ -7,8 +7,8 @@
 
 import UIKit
 
-class NewsCacheService: NewsCaching {
-    static let shared = NewsCacheService()
+class NewsUrlCacheService: NewsCaching {
+    static let shared = NewsUrlCacheService()
     
     // store in cache
     func store(for data: Data?, with response: URLResponse) {
@@ -42,16 +42,15 @@ class NewsCacheService: NewsCaching {
     }
     
     // retrieving image from cache
-    func cachedImageNews(for urlStr: String) -> UIImage? {
+    func cachedImageNews(for urlStr: String) -> UIImage? {        
         guard let url = URL(string: urlStr) else {
             return nil
         }
         
         let urlRequest = URLRequest(url: url)
         
-        if let cached = URLCache.shared.cachedResponse(for: urlRequest),
-           let image = UIImage(data: cached.data) {
-            return image
+        if let cached = URLCache.shared.cachedResponse(for: urlRequest) {
+            return UIImage(data: cached.data)
         }
         
         return nil

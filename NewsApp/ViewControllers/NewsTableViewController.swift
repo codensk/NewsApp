@@ -14,12 +14,12 @@ class NewsTableViewController: UITableViewController {
     var selectedCategory: Category!
     
     private var newsFetcher: NewsFetching!
+    private let cacher = NewsUrlCacheService.shared
     
     private var headLine: NewsHeadline?
-    private let cacher = NewsCacheService.shared
     
     private var activityIndicator: UIActivityIndicatorView!
-
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,7 +29,7 @@ class NewsTableViewController: UITableViewController {
     
     // MARK: - Methods
     private func setup() {
-        newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .alamofire)
+        newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .urlSession)
         
         tableView.rowHeight = 92
         tableView.separatorStyle = .none
@@ -41,12 +41,11 @@ class NewsTableViewController: UITableViewController {
     }
     
     @objc private func newsRefresh() {
-        cacher.clearCache()
-        
+
         fetchNewsList(for: selectedCategory)
         
         tableView.refreshControl?.endRefreshing()
-        
+                
         //tableView.reloadData()
     }
 }
@@ -65,30 +64,13 @@ extension NewsTableViewController {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: NewsTableViewController.newsCellIdentifier, for: indexPath) as? NewsTableViewCell,
               let headLine = headLine,
               let news = headLine.articles
-              else {
+        else {
             return UITableViewCell()
         }
         
         let newsItem = news[indexPath.row]
         
-        cell.newsTitleLabel.text = newsItem.title
-        
-        cell.newsImageView.image = UIImage(named: "placeholder")
- 
-        if let imageUrl = newsItem.urlToImage {
-            newsFetcher.fetchNewsImage(for: imageUrl) { image, error in
-                if let error = error {
-                    print("Error: \(error)")
-                    
-                    return
-                }
-                
-                DispatchQueue.main.async {
-                    cell.newsImageView.image = image
-                }
-            }
-        }
-        
+        cell.configure(with: newsItem, networkService: newsFetcher, cacheService: cacher)
         
         return cell
     }
@@ -97,15 +79,20 @@ extension NewsTableViewController {
         guard let vc = storyboard?.instantiateViewController(identifier: ReadViewController.identifier) as? ReadViewController,
               let headLine = headLine,
               let news = headLine.articles
-              else {
+        else {
             return
         }
         
         let selectedNewsItem = news[indexPath.row]
         
-        vc.newsItem = selectedNewsItem
         vc.newsFetcher = newsFetcher
-      
+        vc.newsItem = selectedNewsItem
+        vc.newsImage = UIImage(named: "placeholder")
+        
+        if let newsImage = cacher.cachedImageNews(for: selectedNewsItem.urlToImage ?? "") {
+            vc.newsImage = newsImage
+        }
+        
         navigationController?.pushViewController(vc, animated: true)
     }
 }
@@ -135,7 +122,7 @@ extension NewsTableViewController {
                 self.tableView.reloadData()
                 self.stopActivityIndicator()
             }
-     
+            
         }
     }
 }

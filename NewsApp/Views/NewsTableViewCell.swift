@@ -18,5 +18,28 @@ class NewsTableViewCell: UITableViewCell {
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
     }
-
+    
+    func configure(with newsItem: NewsItem, networkService: NewsFetching, cacheService: NewsCaching) {
+        newsTitleLabel.text = newsItem.title
+        
+        newsImageView.image = UIImage(named: "placeholder")
+        
+        if let cachedImage = cacheService.cachedImageNews(for: newsItem.urlToImage ?? "") {
+            newsImageView.image = cachedImage
+            return
+        }
+                
+        networkService.fetchNewsImage(for: newsItem.urlToImage ?? "") { image, error in
+            if let error = error {
+                print("Error: \(error)")
+                
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.newsImageView.image = image
+            }
+            
+        }
+    }
 }

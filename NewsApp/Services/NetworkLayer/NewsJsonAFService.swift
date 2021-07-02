@@ -12,11 +12,11 @@ import UIKit
 class NewsJsonAFService: NewsFetching {
     static let shared = NewsJsonAFService()
     
-    private let cacher = NewsCacheService.shared
+    private let cacher = NewsUrlCacheService.shared
     
     var apiKey = "2376ba10df08418b93b024c4aa6803a1"
     
-    private let country = "ru"
+    private var country = "ru"
     
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void) {
         let urlStr = "\(API.headlines.rawValue)?country=\(country)&category=\(category.categoryCode)&apiKey=\(apiKey)"
@@ -46,10 +46,10 @@ class NewsJsonAFService: NewsFetching {
             return
         }
         
-        if let image = cacher.cachedImageNews(for: urlStr) {
-            completionHandler(image, nil)
-        }
-        
+//        if let image = cacher.cachedImageNews(for: urlStr) {
+//            completionHandler(image, nil)
+//        }
+
         let request = AF.request(urlStr).validate()
         
         request.response { response in
@@ -83,5 +83,11 @@ class NewsJsonAFService: NewsFetching {
                 completionHandler(result, nil)
             }
         }
+    }
+    
+    func switchLanguage() -> String {
+        country = country == "ru" ? "us" : "ru"
+        
+        return country
     }
 }

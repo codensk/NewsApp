@@ -13,9 +13,9 @@ class NewsJsonService: NewsFetching {
     
     var apiKey = "2376ba10df08418b93b024c4aa6803a1"
     
-    private let cacher = NewsCacheService.shared
+    private let cacher = NewsUrlCacheService.shared
 
-    private let country = "ru"
+    private var country = "ru"
     
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void) {
         let urlStr = "\(API.headlines.rawValue)?country=\(country)&category=\(category.categoryCode)&apiKey=\(apiKey)"
@@ -60,9 +60,9 @@ class NewsJsonService: NewsFetching {
             return
         }
         
-        if let image = cacher.cachedImageNews(for: urlStr) {
-            completionHandler(image, nil)
-        }
+//        if let image = cacher.cachedImageNews(for: urlStr) {
+//            completionHandler(image, nil)
+//        }
    
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
@@ -78,12 +78,11 @@ class NewsJsonService: NewsFetching {
             }
             
             guard let image = UIImage(data: data) else {
+                self.cacher.store(for: data, with: response)
                 completionHandler(nil, "Image data error")
                 
                 return
             }
-            
-            self.cacher.store(for: data, with: response)
                         
             completionHandler(image, nil)
         }
@@ -131,5 +130,11 @@ class NewsJsonService: NewsFetching {
         }
         
         task.resume()
+    }
+    
+    func switchLanguage() -> String {
+        country = country == "ru" ? "en" : "ru"
+        
+        return country
     }
 }
