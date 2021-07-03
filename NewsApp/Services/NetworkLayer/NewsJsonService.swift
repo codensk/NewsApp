@@ -60,9 +60,9 @@ class NewsJsonService: NewsFetching {
             return
         }
         
-//        if let image = cacher.cachedImageNews(for: urlStr) {
-//            completionHandler(image, nil)
-//        }
+        if let image = cacher.cachedImageNews(for: urlStr) {
+            completionHandler(image, nil)
+        }
    
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
@@ -132,9 +132,13 @@ class NewsJsonService: NewsFetching {
         task.resume()
     }
     
-    func switchLanguage() -> String {
-        country = country == "ru" ? "en" : "ru"
+    func switchLanguage() {
+        country = country == "ru" ? "us" : "ru"
         
+        UserDefaults.standard.setValue(country, forKey: "newsLang")
+    }
+    
+    func getCurrentLang() -> String {
         return country
     }
 }

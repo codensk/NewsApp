@@ -11,10 +11,11 @@ class NewsTableViewController: UITableViewController {
     static let identifier = "newsVC"
     static let newsCellIdentifier = "newsItemCell"
     
-    var selectedCategory: Category!
-    
-    private var newsFetcher: NewsFetching!
     private let cacher = NewsUrlCacheService.shared
+    
+    private var selectedCategory: Category!
+    private var newsFetcher: NewsFetching!
+    private var cellImageCache: NSCache<NSString, UIImage>!
     
     private var headLine: NewsHeadline?
     
@@ -29,7 +30,11 @@ class NewsTableViewController: UITableViewController {
     
     // MARK: - Methods
     private func setup() {
+        let storedNewsLang = UserDefaults.standard.string(forKey: "newsLang")
+        
         newsFetcher = NewsFetcher.shared.createNetworkLayer(for: .urlSession)
+        
+        cellImageCache = NSCache()
         
         tableView.rowHeight = 92
         tableView.separatorStyle = .none
@@ -38,6 +43,20 @@ class NewsTableViewController: UITableViewController {
         tableView.refreshControl?.attributedTitle = NSAttributedString(string: "Обновить")
         tableView.refreshControl?.addTarget(self, action: #selector(newsRefresh), for: .valueChanged)
         tableView.refreshControl?.layer.zPosition = -1
+        
+        if storedNewsLang == "us" {
+            newsFetcher.switchLanguage()
+        }
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: newsFetcher.getCurrentLang().uppercased(), style: .plain, target: self, action: #selector(langSwitchButton))
+    }
+    
+    @objc private func langSwitchButton() {
+        newsFetcher.switchLanguage()
+   
+        navigationItem.rightBarButtonItem?.title = newsFetcher.getCurrentLang().uppercased()
+        
+        fetchNewsList(for: selectedCategory)
     }
     
     @objc private func newsRefresh() {
@@ -63,14 +82,41 @@ extension NewsTableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: NewsTableViewController.newsCellIdentifier, for: indexPath) as? NewsTableViewCell,
               let headLine = headLine,
-              let news = headLine.articles
+              let news = headLine.articles,
+              news.indices.contains(indexPath.row)
         else {
             return UITableViewCell()
         }
         
         let newsItem = news[indexPath.row]
+        let imageUrl = newsItem.urlToImage ?? ""
         
-        cell.configure(with: newsItem, networkService: newsFetcher, cacheService: cacher)
+        cell.newsTitleLabel.text = newsItem.title
+        
+        if let image = self.cellImageCache.object(forKey: imageUrl as NSString) {
+            DispatchQueue.main.async {
+                cell.newsImageView.image = image
+            }
+        } else {
+            cell.newsImageView.image = UIImage(named: "placeholder")
+            
+            newsFetcher.fetchNewsImage(for: newsItem.urlToImage ?? "") { image, error in
+                if let error = error {
+                    print("Error: \(error)")
+                    
+                    return
+                }
+                
+                if let image = image {
+                    self.cellImageCache.setObject(image, forKey: imageUrl as NSString)
+                }
+                
+                DispatchQueue.main.async {
+                    cell.newsImageView.image = image
+                }
+                
+            }
+        }
         
         return cell
     }
@@ -84,15 +130,16 @@ extension NewsTableViewController {
         }
         
         let selectedNewsItem = news[indexPath.row]
+        let imageUrl = selectedNewsItem.urlToImage ?? ""
         
         vc.newsFetcher = newsFetcher
         vc.newsItem = selectedNewsItem
         vc.newsImage = UIImage(named: "placeholder")
         
-        if let newsImage = cacher.cachedImageNews(for: selectedNewsItem.urlToImage ?? "") {
-            vc.newsImage = newsImage
+        if let image = self.cellImageCache.object(forKey: imageUrl as NSString) {
+            vc.newsImage = image
         }
-        
+    
         navigationController?.pushViewController(vc, animated: true)
     }
 }

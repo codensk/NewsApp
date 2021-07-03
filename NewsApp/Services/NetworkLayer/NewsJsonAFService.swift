@@ -46,9 +46,9 @@ class NewsJsonAFService: NewsFetching {
             return
         }
         
-//        if let image = cacher.cachedImageNews(for: urlStr) {
-//            completionHandler(image, nil)
-//        }
+        if let image = cacher.cachedImageNews(for: urlStr) {
+            completionHandler(image, nil)
+        }
 
         let request = AF.request(urlStr).validate()
         
@@ -85,9 +85,13 @@ class NewsJsonAFService: NewsFetching {
         }
     }
     
-    func switchLanguage() -> String {
+    func switchLanguage() {
         country = country == "ru" ? "us" : "ru"
         
+        UserDefaults.standard.setValue(country, forKey: "newsLang")
+    }
+    
+    func getCurrentLang() -> String {
         return country
     }
 }
