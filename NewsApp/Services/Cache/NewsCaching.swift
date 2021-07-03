@@ -8,8 +8,7 @@
 import UIKit
 
 protocol NewsCaching {
-    func store(for data: Data?, with response: URLResponse)
-    func cachedNews(for urlStr: String) -> NewsHeadline?
-    func cachedImageNews(for urlStr: String) -> UIImage?
+    func cacheImage(for data: Data?, with response: URLResponse)
+    func getCachedImage(for urlStr: String) -> UIImage?
     func clearCache()
 }

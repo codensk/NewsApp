@@ -23,11 +23,7 @@ class NewsJsonService: NewsFetching {
         guard let url = URL(string: urlStr) else {
             return
         }
-        
-        if let news = cacher.cachedNews(for: urlStr) {
-            completionHandler(news, nil)
-        }
-        
+
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 completionHandler(nil, error.localizedDescription)
@@ -35,7 +31,7 @@ class NewsJsonService: NewsFetching {
                 return
             }
             
-            guard let response = response, let data = data else {
+            guard let data = data else {
                 completionHandler(nil, "Data loading error")
                 
                 return
@@ -43,9 +39,7 @@ class NewsJsonService: NewsFetching {
             
             do {
                 let newsHeadline = try JSONDecoder().decode(NewsHeadline.self, from: data)
-                
-                self.cacher.store(for: data, with: response)
-                
+                                
                 completionHandler(newsHeadline, nil)
             } catch let error {
                 completionHandler(nil, error.localizedDescription)
@@ -60,7 +54,7 @@ class NewsJsonService: NewsFetching {
             return
         }
         
-        if let image = cacher.cachedImageNews(for: urlStr) {
+        if let image = cacher.getCachedImage(for: urlStr) {
             completionHandler(image, nil)
         }
    
@@ -78,7 +72,7 @@ class NewsJsonService: NewsFetching {
             }
             
             guard let image = UIImage(data: data) else {
-                self.cacher.store(for: data, with: response)
+                self.cacher.cacheImage(for: data, with: response)
                 completionHandler(nil, "Image data error")
                 
                 return

@@ -11,7 +11,7 @@ class NewsUrlCacheService: NewsCaching {
     static let shared = NewsUrlCacheService()
     
     // store in cache
-    func store(for data: Data?, with response: URLResponse) {
+    func cacheImage(for data: Data?, with response: URLResponse) {
         guard let urlResponse = response.url, let data = data else { return }
         
         let urlRequest = URLRequest(url: urlResponse)
@@ -20,29 +20,8 @@ class NewsUrlCacheService: NewsCaching {
         URLCache.shared.storeCachedResponse(cachedUrlResponse, for: urlRequest)
     }
     
-    // retrieving news from cache
-    func cachedNews(for urlStr: String) -> NewsHeadline? {
-        guard let url = URL(string: urlStr) else {
-            return nil
-        }
-        
-        let urlRequest = URLRequest(url: url)
-        
-        if let cached = URLCache.shared.cachedResponse(for: urlRequest) {
-            do {
-                let newsHeadline = try JSONDecoder().decode(NewsHeadline.self, from: cached.data)
-                
-                return newsHeadline
-            } catch let error {
-                print("Error: \(error.localizedDescription)")
-            }
-        }
-        
-        return nil
-    }
-    
-    // retrieving image from cache
-    func cachedImageNews(for urlStr: String) -> UIImage? {        
+    // get cached image
+    func getCachedImage(for urlStr: String) -> UIImage? {        
         guard let url = URL(string: urlStr) else {
             return nil
         }

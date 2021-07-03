@@ -21,10 +21,6 @@ class NewsJsonAFService: NewsFetching {
     func fetchNews(for category: Category, completionHandler: @escaping (NewsHeadline?, String?) -> Void) {
         let urlStr = "\(API.headlines.rawValue)?country=\(country)&category=\(category.categoryCode)&apiKey=\(apiKey)"
         
-        if let news = cacher.cachedNews(for: urlStr) {
-            completionHandler(news, nil)
-        }
-        
         let request = AF.request(urlStr).validate()
         
         request.responseDecodable(of: NewsHeadline.self) { response in
@@ -32,10 +28,6 @@ class NewsJsonAFService: NewsFetching {
             case .failure(let error):
                 completionHandler(nil, error.localizedDescription)
             case .success(let result):
-                if let urlResponse = response.response {
-                    self.cacher.store(for: response.data, with: urlResponse)
-                }
-                
                 completionHandler(result, nil)
             }
         }
@@ -46,7 +38,7 @@ class NewsJsonAFService: NewsFetching {
             return
         }
         
-        if let image = cacher.cachedImageNews(for: urlStr) {
+        if let image = cacher.getCachedImage(for: urlStr) {
             completionHandler(image, nil)
         }
 
@@ -64,7 +56,7 @@ class NewsJsonAFService: NewsFetching {
                 }
                 
                 if let urlResponse = response.response {
-                    self.cacher.store(for: data, with: urlResponse)
+                    self.cacher.cacheImage(for: data, with: urlResponse)
                 }
                 
                 completionHandler(image, nil)
